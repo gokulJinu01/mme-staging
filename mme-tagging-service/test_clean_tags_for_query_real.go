@@ -1,3 +1,6 @@
+//go:build debug_real
+// +build debug_real
+
 package main
 
 import (

@@ -1,3 +1,6 @@
+//go:build debug_regex
+// +build debug_regex
+
 package main
 
 import (
