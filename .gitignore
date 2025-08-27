@@ -124,3 +124,9 @@ local/
 dev/
 .env.local
 .env.development
+\n# Ignore tests and env configs removed from tracking
+tests/
+test_eff/
+deployment/test_eff/
+mme-tagmaker-service/app/tests/
+deployment/config/env.*
