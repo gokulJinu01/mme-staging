@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "data": {
+    "metrics": {
+      "current_model": "gpt-3.5-turbo",
+      "current_tokenizer": "tiktoken",
+      "errors_total": 0,
+      "fallback_total": 0,
+      "mode": "tiktoken"
+    },
+    "mode": "tiktoken",
+    "model": "gpt-3.5-turbo",
+    "status": "healthy",
+    "tokenizer": "tiktoken"
+  },
+  "error": null,
+  "meta": {
+    "requestId": "a994cd05-ac67-4cb9-82ef-c049ae1cee26",
+    "timestamp": "2025-08-26T19:14:51Z"
+  }
+}

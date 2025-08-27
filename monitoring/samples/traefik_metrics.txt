@@ -1,0 +1,20 @@
+# HELP traefik_config_last_reload_failure Last config reload failure
+# TYPE traefik_config_last_reload_failure gauge
+traefik_config_last_reload_failure 0
+# HELP traefik_config_last_reload_success Last config reload success
+# TYPE traefik_config_last_reload_success gauge
+traefik_config_last_reload_success 1.755731462e+09
+# HELP traefik_config_reloads_failure_total Config failure reloads
+# TYPE traefik_config_reloads_failure_total counter
+traefik_config_reloads_failure_total 0
+# HELP traefik_config_reloads_total Config reloads
+# TYPE traefik_config_reloads_total counter
+traefik_config_reloads_total 2
+# HELP traefik_entrypoint_open_connections How many open connections exist on an entrypoint, partitioned by method and protocol.
+# TYPE traefik_entrypoint_open_connections gauge
+traefik_entrypoint_open_connections{entrypoint="metrics",method="GET",protocol="http"} 1
+# HELP traefik_entrypoint_request_duration_seconds How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.
+# TYPE traefik_entrypoint_request_duration_seconds histogram
+traefik_entrypoint_request_duration_seconds_bucket{code="200",entrypoint="metrics",method="GET",protocol="http",le="0.1"} 1
+traefik_entrypoint_request_duration_seconds_bucket{code="200",entrypoint="metrics",method="GET",protocol="http",le="0.3"} 1
+traefik_entrypoint_request_duration_seconds_bucket{code="200",entrypoint="metrics",method="GET",protocol="http",le="1.2"} 1

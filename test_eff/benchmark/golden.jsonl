@@ -1,0 +1,5 @@
+{"query_id": "q001", "query_text": "machine learning algorithms", "relevant_tags": ["ml", "algorithms"], "relevant_ids": ["ml_algo_001", "ml_algo_002"], "domain": "ai", "difficulty": "easy"}
+{"query_id": "q002", "query_text": "ML algorithms", "relevant_tags": ["ml", "algorithms"], "relevant_ids": ["ml_algo_001", "ml_algo_002"], "domain": "ai", "difficulty": "synonym"}
+{"query_id": "q003", "query_text": "machine learning algos", "relevant_tags": ["ml", "algorithms"], "relevant_ids": ["ml_algo_001", "ml_algo_002"], "domain": "ai", "difficulty": "abbreviation"}
+{"query_id": "q004", "query_text": "machin learning algoritms", "relevant_tags": ["ml", "algorithms"], "relevant_ids": ["ml_algo_001", "ml_algo_002"], "domain": "ai", "difficulty": "typo"}
+{"query_id": "q005", "query_text": "機械学習アルゴリズム", "relevant_tags": ["ml", "algorithms"], "relevant_ids": ["ml_algo_001", "ml_algo_002"], "domain": "ai", "difficulty": "multilingual"}

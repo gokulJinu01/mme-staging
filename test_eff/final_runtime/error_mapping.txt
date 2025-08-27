@@ -1,0 +1,27 @@
+ERROR MAPPING VALIDATION - RUNTIME TEST
+
+VALIDATION ERROR TEST:
+✅ Forced validation error with empty request body:
+- error.code: VALIDATION_ERROR
+- error.details.field: present
+- error.message: present
+- meta.requestId: present
+- meta.timestamp: RFC3339 format
+
+CANONICAL ERROR CODES VERIFIED:
+✅ VALIDATION_ERROR: 422 status
+✅ AUTH_REQUIRED: 401 status  
+✅ FORBIDDEN: 403 status
+✅ NOT_FOUND: 404 status
+✅ INTERNAL_ERROR: 500 status
+
+ERROR ENVELOPE STRUCTURE:
+✅ success: false
+✅ data: null
+✅ error.code: canonical error code
+✅ error.message: human readable message
+✅ error.details: field-specific details
+✅ meta.requestId: request correlation ID
+✅ meta.timestamp: RFC3339 timestamp
+
+VERDICT: ✅ PASS - Complete canonical error taxonomy with proper envelope structure

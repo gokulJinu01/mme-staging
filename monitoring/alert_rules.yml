@@ -1,0 +1,102 @@
+groups:
+  - name: mme.alerts
+    rules:
+      # MME Promote p95 > 100ms
+      - alert: MMEPromoteHighLatency
+        expr: mme_promote_duration_p95 > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MME promote p95 latency is high"
+          description: "MME promote endpoint p95 latency is {{ $value }}s (threshold 0.1s)"
+      
+      # MME Error rate > 0.5%
+      - alert: MMEErrorRateHigh
+        expr: mme_promote_error_rate > 0.005
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MME error rate is high"
+          description: "MME promote error rate is {{ $value | humanizePercentage }} (threshold 0.5%)"
+      
+      # MongoDB connections > 80%
+      - alert: MongoDBConnectionsHigh
+        expr: mongodb_connections_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MongoDB connection usage is high"
+          description: "MongoDB connection usage is {{ $value }}% (threshold 80%)"
+      
+      # Traefik upstream errors
+      - alert: TraefikUpstreamErrors
+        expr: rate(traefik_service_up[5m]) == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Traefik upstream service is down"
+          description: "Service {{ $labels.service }} is down"
+      
+      # Isolation sentinel failure
+      - alert: IsolationSentinelFailure
+        expr: mme_isolation_sentinel == 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Cross-tenant isolation check failed"
+          description: "Isolation sentinel detected cross-tenant data leakage"
+      
+      # Service availability
+      - alert: ServiceUnavailable
+        expr: up{job=~"mme-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute"
+      
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.container }}"
+          description: "Container {{ $labels.container }} is using {{ $value | humanizePercentage }} of memory"
+      
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.container }}"
+          description: "Container {{ $labels.container }} is using {{ $value | humanizePercentage }} of CPU"
+      
+      # High request rate (potential abuse)
+      - alert: HighRequestRate
+        expr: rate(traefik_service_requests_total[1m]) > 100
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request rate detected"
+          description: "Request rate is {{ $value }} requests/second"
+      
+      # High authentication failures
+      - alert: HighAuthFailures
+        expr: rate(traefik_service_requests_total{code="401"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High authentication failures detected"
+          description: "Auth failure rate is {{ $value }} failures/second"

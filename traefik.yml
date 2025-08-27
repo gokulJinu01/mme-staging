@@ -1,0 +1,91 @@
+# Traefik configuration for MME services
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+  dashboard:
+    address: ":9000"
+  metrics:
+    address: ":8082"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: mme-network
+
+# Metrics configuration
+metrics:
+  prometheus:
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    entryPoint: metrics
+
+# Global timeout configuration (resilience policy v1 - 2025-08-20)
+# Note: serversTransport is not available in Traefik v2.10, using global timeouts
+
+# Global middleware for authentication
+http:
+  middlewares:
+    # ForwardAuth middleware - forwards auth requests to JWT verifier
+    auth-forward:
+      forwardAuth:
+        address: "http://jwt-verifier:3000/verify"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - "X-User-ID"
+          - "X-User-Roles"
+          - "X-Org-ID"
+          - "X-Project-ID"
+    
+    # CORS middleware
+    cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-User-ID
+          - X-User-Roles
+          - X-Org-ID
+        accessControlAllowOriginList:
+          - "*"
+        accessControlMaxAge: 86400
+        addVaryHeader: true
+    
+    # Retry middleware for idempotent routes (resilience policy v1 - 2025-08-20)
+    retry-readonly:
+      retry:
+        attempts: 1
+        initialInterval: 100ms
+    
+    # Rate limiting middleware for write operations (resilience policy v1 - 2025-08-20)
+    ratelimit-save:
+      rateLimit:
+        average: 20
+        burst: 40
+    
+    # Rate limiting middleware for promote operations (resilience policy v1 - 2025-08-20)
+    ratelimit-promote:
+      rateLimit:
+        average: 20
+        burst: 40
+
+# Logging configuration
+log:
+  level: INFO
+
+accessLog: {}

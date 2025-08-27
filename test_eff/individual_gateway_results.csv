@@ -1,0 +1,10 @@
+Endpoint|URL|Method|Code|Time|Status
+MME Health Check|mme.localhost/health|GET|200|0.005793|SUCCESS
+MME Metrics|mme.localhost/metrics|GET|200|0.004258|SUCCESS
+MME Memory Query|mme.localhost/memory/query?tags=rag&limit=3|GET|200|0.005578|SUCCESS
+MME Memory Recent|mme.localhost/memory/recent|GET|200|0.005208|SUCCESS
+MME Memory Query Debug|mme.localhost/memory/query-debug?tags=test&limit=3|GET|200|0.004714|SUCCESS
+MME Memory Save|mme.localhost/memory/save|POST|201|0.004941|SUCCESS
+MME Memory Promote|mme.localhost/memory/promote|POST|400|0.003417|SUCCESS
+MME Memory Inject|mme.localhost/memory/inject|POST|400|0.003601|SUCCESS
+MME Memory Delete|mme.localhost/memory/test-id|DELETE|400|0.003810|FAIL

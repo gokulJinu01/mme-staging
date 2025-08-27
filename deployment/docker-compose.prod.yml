@@ -1,0 +1,117 @@
+# Production overlay for MME (Memory Management Engine)
+# Security hardening v1 - 2025-08-21
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  # Traefik API Gateway - Production Hardening
+  traefik:
+    environment:
+      - ENV=prod
+      - GRAFANA_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    ports:
+      # Remove dashboard port in production
+      - "80:80"
+      # - "9000:9000"  # Traefik dashboard - DISABLED in prod
+      # - "8082:8082"  # Traefik metrics - INTERNAL ONLY
+    labels:
+      # Disable dashboard in production
+      - "traefik.http.routers.traefik.enable=false"
+      # Add security headers middleware - security hardening v1 - 2025-08-21
+      - "traefik.http.middlewares.security-headers.headers.frameDeny=true"
+      - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.security-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.security-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
+      # Add request size limits - security hardening v1 - 2025-08-21
+      - "traefik.http.middlewares.request-size.headers.customRequestHeaders.X-Request-Size-Limit=2MB"
+
+  # JWT Verifier Service - Production Hardening
+  jwt-verifier:
+    environment:
+      - ENV=prod
+      # JWT_SECRET should be set via environment or secret store
+      - JWT_SECRET=${JWT_SECRET}
+
+  # MongoDB Database - Production Hardening
+  mongodb:
+    environment:
+      - ENV=prod
+      # MONGODB_ROOT_PASSWORD should be set via environment or secret store
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+    # Remove direct port exposure in production
+    ports: []
+
+  # Redis Cache - Production Hardening
+  redis:
+    environment:
+      - ENV=prod
+      # REDIS_PASSWORD should be set via environment or secret store
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    # Remove direct port exposure in production
+    ports: []
+
+  # MME Tagging Service - Production Hardening
+  mme-tagging-service:
+    environment:
+      - ENV=prod
+      - ENABLE_DEBUG=false
+      - LOG_LEVEL=WARN
+      # MONGODB_URI should be set via environment or secret store
+      - MONGODB_URI=mongodb://admin:${MONGODB_ROOT_PASSWORD}@mongodb:27017/mme?authSource=admin&maxPoolSize=100&minPoolSize=10&maxIdleTimeMS=300000
+      - JWT_SECRET=${JWT_SECRET}
+    labels:
+      # Apply security headers to all MME routes
+      - "traefik.http.routers.mme-query.middlewares=auth-forward@docker,retry-readonly@file,security-headers@docker"
+      - "traefik.http.routers.mme-recent.middlewares=auth-forward@docker,retry-readonly@file,security-headers@docker"
+      - "traefik.http.routers.mme-promote.middlewares=auth-forward@docker,retry-readonly@file,ratelimit-promote@file,security-headers@docker"
+      - "traefik.http.routers.mme-save.middlewares=auth-forward@docker,ratelimit-save@file,security-headers@docker"
+      - "traefik.http.routers.mme-delete.middlewares=auth-forward@docker,security-headers@docker"
+
+  # MME Tagmaker Service - Production Hardening
+  mme-tagmaker-service:
+    environment:
+      - ENV=prod
+      - ENABLE_DEBUG=false
+      - LOG_LEVEL=WARN
+      # OPENAI_API_KEY should be set via environment or secret store
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MONGODB_URI=mongodb://admin:${MONGODB_ROOT_PASSWORD}@mongodb:27017/mme?authSource=admin&maxPoolSize=100&minPoolSize=10&maxIdleTimeMS=300000
+    labels:
+      # Apply security headers to tagmaker routes
+      - "traefik.http.routers.mme-tagmaker.middlewares=auth-forward@docker,security-headers@docker"
+
+  # Prometheus - Production Hardening
+  prometheus:
+    environment:
+      - ENV=prod
+    # Remove direct port exposure in production
+    ports: []
+
+  # Grafana - Production Hardening
+  grafana:
+    environment:
+      - ENV=prod
+      # GRAFANA_PASSWORD should be set via environment or secret store
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    # Remove direct port exposure in production
+    ports: []
+
+  # Alertmanager - Production Hardening
+  alertmanager:
+    environment:
+      - ENV=prod
+    # Remove direct port exposure in production
+    ports: []
+
+  # Isolation Sentinel - Production Hardening
+  isolation-sentinel:
+    environment:
+      - ENV=prod
+      - ENABLE_DEBUG=false
+
+  # Spike Trace Sampler - Production Hardening
+  spike-trace-sampler:
+    environment:
+      - ENV=prod
+      - ENABLE_DEBUG=false

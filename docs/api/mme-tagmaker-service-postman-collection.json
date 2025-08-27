@@ -1,0 +1,579 @@
+{
+	"info": {
+		"_postman_id": "aistore-mme-tagmaker-collection",
+		"name": "AgentPods MME Tagmaker Service API (via Traefik)",
+		"description": "Complete API collection for AgentPods MME Tagmaker Service through Traefik API Gateway (Port 8447 (HTTPS))\n\nThis collection includes all endpoints for:\n- AI-powered tag extraction and generation\n- Service status and monitoring\n- Database operations and statistics\n- Manual rebalancing and queue management\n- Cross-service integration with MME Tagging\n\nEnvironment Variables Required:\n- {{base_url}}: https://localhost:8447\n- {{tagmaker_url}}: https://localhost:8447/api/v1/tagmaker\n- {{jwt_token}}: JWT token from auth service\n- {{user_id}}: User ID from JWT token\n- {{test_content}}: Test content for AI tag extraction\n- {{test_user_id}}: Test user ID for tag generation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "agentpods-mme-tagmaker"
+	},
+	"item": [
+		{
+			"name": "🏥 Health & Monitoring",
+			"item": [
+				{
+					"name": "Service Health Check",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/health",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Get MME tagmaker service health status"
+					},
+					"response": []
+				},
+				{
+					"name": "Service Version",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/version",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"version"
+							]
+						},
+						"description": "Get MME tagmaker service version information"
+					},
+					"response": []
+				}
+			],
+			"description": "Health check and version endpoints for the MME tagmaker service"
+		},
+		{
+			"name": "📊 Service Status",
+			"item": [
+				{
+					"name": "Queue Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/queue-status",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"queue-status"
+							]
+						},
+						"description": "Check the status of failed delta queue and retry operations"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test queue status response",
+									"pm.test('Queue status retrieved successfully', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('queue_count');",
+									"    pm.expect(response).to.have.property('status');",
+									"});",
+									"",
+									"// Log queue status",
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('Queue count:', response.queue_count);",
+									"    console.log('Queue status:', response.status);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Database Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/database-status",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"database-status"
+							]
+						},
+						"description": "Check MongoDB connection status and get tag statistics"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test database status response",
+									"pm.test('Database status retrieved successfully', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('database_connected');",
+									"    pm.expect(response).to.have.property('statistics');",
+									"    pm.expect(response).to.have.property('status');",
+									"});",
+									"",
+									"// Log database statistics",
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('Database connected:', response.database_connected);",
+									"    console.log('Total tags:', response.statistics.total_tags);",
+									"    console.log('Total blocks:', response.statistics.total_blocks);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				}
+			],
+			"description": "Service status and monitoring endpoints"
+		},
+		{
+			"name": "🤖 AI Tag Generation",
+			"item": [
+				{
+					"name": "Generate and Save Tags",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"{{test_content}}\",\n  \"userId\": \"{{test_user_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{tagmaker_url}}/generate-and-save",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"generate-and-save"
+							]
+						},
+						"description": "Extract semantic tags from content using AI and optionally save to tagging service"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test AI tag generation response",
+									"pm.test('AI tag generation successful', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('saved');",
+									"    pm.expect(response).to.have.property('cues');",
+									"    pm.expect(response).to.have.property('confidence');",
+									"    pm.expect(response).to.have.property('primary_tag');",
+									"    pm.expect(Array.isArray(response.cues)).to.be.true;",
+									"});",
+									"",
+									"// Log AI extraction results",
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('Extracted cues:', response.cues);",
+									"    console.log('Confidence score:', response.confidence);",
+									"    console.log('Primary tag:', response.primary_tag);",
+									"    console.log('Saved to tagging service:', response.saved);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Feedback Endpoint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/feedback",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"feedback"
+							]
+						},
+						"description": "Submit feedback for AI tag generation (placeholder endpoint)"
+					},
+					"response": []
+				}
+			],
+			"description": "AI-powered tag extraction and generation endpoints"
+		},
+		{
+			"name": "⚙️ Admin Operations",
+			"item": [
+				{
+					"name": "Manual Rebalance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/manual-rebalance",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"manual-rebalance"
+							]
+						},
+						"description": "Manually trigger tag rebalancing process"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test manual rebalance response",
+									"pm.test('Manual rebalance triggered successfully', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('message');",
+									"    pm.expect(response).to.have.property('status');",
+									"});",
+									"",
+									"console.log('✅ Manual rebalance triggered');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				}
+			],
+			"description": "Administrative operations and maintenance"
+		},
+		{
+			"name": "🔄 Test Workflow",
+			"item": [
+				{
+					"name": "Complete AI Tag Generation Workflow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"The development team successfully implemented a microservices architecture with Docker containerization, Kubernetes orchestration, Redis caching, MongoDB database, Prometheus monitoring, and CI/CD pipeline with GitHub Actions. The system achieved 99.9% uptime SLA and is now production-ready with full observability and scalability.\",\n  \"userId\": \"{{test_user_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{tagmaker_url}}/generate-and-save",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"generate-and-save"
+							]
+						},
+						"description": "Step 1: Generate AI tags from complex technical content"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test AI tag generation",
+									"pm.test('AI tag generation successful', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('cues');",
+									"    pm.expect(response).to.have.property('confidence');",
+									"    pm.expect(response.confidence).to.be.greaterThan(0.8);",
+									"});",
+									"",
+									"console.log('✅ Step 1: AI tag generation completed');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Check Service Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/database-status",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"database-status"
+							]
+						},
+						"description": "Step 2: Verify service status and database connectivity"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test service status",
+									"pm.test('Service status verified', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.database_connected).to.be.true;",
+									"});",
+									"",
+									"console.log('✅ Step 2: Service status verified');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Check Queue Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/queue-status",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"queue-status"
+							]
+						},
+						"description": "Step 3: Check queue status for any failed operations"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test queue status",
+									"pm.test('Queue status checked', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('queue_count');",
+									"    pm.expect(response).to.have.property('status');",
+									"});",
+									"",
+									"console.log('✅ Step 3: Queue status checked');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Trigger Manual Rebalance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{tagmaker_url}}/manual-rebalance",
+							"host": [
+								"{{tagmaker_url}}"
+							],
+							"path": [
+								"manual-rebalance"
+							]
+						},
+						"description": "Step 4: Trigger manual rebalancing to test admin operations"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test manual rebalance",
+									"pm.test('Manual rebalance triggered', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('message');",
+									"    pm.expect(response).to.have.property('status');",
+									"});",
+									"",
+									"console.log('✅ Step 4: Manual rebalance triggered');",
+									"console.log('🎉 Complete MME Tagmaker workflow test finished successfully!');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				}
+			],
+			"description": "Complete end-to-end workflow testing"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script to set up environment",
+					"console.log('🚀 Starting MME Tagmaker request to:', pm.request.url);",
+					"",
+					"// Log current environment variables",
+					"console.log('Environment variables:');",
+					"console.log('- base_url:', pm.environment.get('base_url'));",
+					"console.log('- tagmaker_url:', pm.environment.get('tagmaker_url'));",
+					"console.log('- user_id:', pm.environment.get('user_id'));"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script",
+					"console.log('📊 Response Status:', pm.response.status);",
+					"console.log('📊 Response Time:', pm.response.responseTime, 'ms');",
+					"",
+					"// Basic response validation",
+					"pm.test('Response time is less than 10000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(10000);",
+					"});",
+					"",
+					"pm.test('Response has valid JSON', function () {",
+					"    pm.response.to.have.jsonBody();",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://localhost:8447",
+			"type": "string"
+		},
+		{
+			"key": "tagmaker_url",
+			"value": "https://localhost:8447/api/v1/tagmaker",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "your-jwt-token-here",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "your-user-id-here",
+			"type": "string"
+		},
+		{
+			"key": "test_user_id",
+			"value": "test-user-123",
+			"type": "string"
+		},
+		{
+			"key": "test_content",
+			"value": "The development team successfully implemented a microservices architecture with Docker containerization, Kubernetes orchestration, Redis caching, MongoDB database, Prometheus monitoring, and CI/CD pipeline with GitHub Actions. The system achieved 99.9% uptime SLA and is now production-ready with full observability and scalability.",
+			"type": "string"
+		}
+	]
+} 

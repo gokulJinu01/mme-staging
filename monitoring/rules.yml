@@ -1,0 +1,46 @@
+groups:
+  - name: mme.rules
+    rules:
+      # Traefik request duration p95 per service
+      - record: traefik_request_duration_p95
+        expr: histogram_quantile(0.95, sum(rate(traefik_service_request_duration_seconds_bucket[5m])) by (le, service))
+      
+      # Traefik request duration p50 per service
+      - record: traefik_request_duration_p50
+        expr: histogram_quantile(0.50, sum(rate(traefik_service_request_duration_seconds_bucket[5m])) by (le, service))
+      
+      # Traefik error rate per service (5xx responses)
+      - record: traefik_error_rate
+        expr: sum(rate(traefik_service_requests_total{code=~"5.."}[5m])) by (service) / sum(rate(traefik_service_requests_total[5m])) by (service)
+      
+      # Traefik request rate per service
+      - record: traefik_request_rate
+        expr: sum(rate(traefik_service_requests_total[5m])) by (service)
+      
+      # MME promote specific metrics
+      - record: mme_promote_request_rate
+        expr: sum(rate(traefik_service_requests_total{service="mme-tagging@docker", method="POST"}[5m]))
+      
+      - record: mme_promote_duration_p95
+        expr: histogram_quantile(0.95, sum(rate(traefik_service_request_duration_seconds_bucket{service="mme-tagging@docker", method="POST"}[5m])) by (le))
+      
+      - record: mme_promote_error_rate
+        expr: sum(rate(traefik_service_requests_total{service="mme-tagging@docker", method="POST", code=~"5.."}[5m])) / sum(rate(traefik_service_requests_total{service="mme-tagging@docker", method="POST"}[5m]))
+      
+      # MongoDB connection usage percentage
+      - record: mongodb_connections_usage_percent
+        expr: (mongodb_connections_current / mongodb_connections_available) * 100
+      
+      # Business metrics
+      - record: mme_promote_success_rate
+        expr: sum(rate(traefik_service_requests_total{service="mme-tagging@docker", method="POST", code=~"2.."}[5m])) / sum(rate(traefik_service_requests_total{service="mme-tagging@docker", method="POST"}[5m]))
+      
+      - record: mme_promote_availability
+        expr: sum(rate(traefik_service_requests_total{service="mme-tagging@docker", method="POST"}[5m])) / sum(rate(traefik_service_requests_total{service="mme-tagging@docker", method="POST"}[5m]))
+      
+      # System metrics (when node-exporter is available)
+      - record: container_memory_usage_percent
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100
+      
+      - record: container_cpu_usage_percent
+        expr: rate(container_cpu_usage_seconds_total[5m]) * 100

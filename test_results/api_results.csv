@@ -1,0 +1,44 @@
+Endpoint|Service|Method|URL|Expected|Code|Time(s)|Status
+Health|gateway|GET|http://localhost/health|200|200|0.006192|PASS
+Metrics|gateway|GET|http://localhost/metrics|200|200|0.004248|PASS
+Memory Query|gateway|GET|http://localhost/memory/query?limit=3|200,401|200|0.005789|PASS
+Memory Recent|gateway|GET|http://localhost/memory/recent|200,401|200|0.004450|PASS
+Memory Query Debug|gateway|GET|http://localhost/memory/query-debug?limit=3|200,401|200|0.005587|PASS
+Memory Save|gateway|POST|http://localhost/memory/save|200,201,400|201|0.004347|PASS
+Memory Promote|gateway|POST|http://localhost/memory/promote|200,400|400|0.004833|PASS
+Memory Inject|gateway|POST|http://localhost/memory/inject|200,400|400|0.003835|PASS
+Tokenizer Health|gateway|GET|http://localhost/memory/tokenizer-health|200,401|200|0.003999|PASS
+Tags Extract|gateway|POST|http://localhost/tags/extract|200,400|200|0.003780|PASS
+Tags Query|gateway|POST|http://localhost/tags/query|200,400|200|0.004504|PASS
+Tags Delta|gateway|POST|http://localhost/tags/delta|200,400|400|0.003665|PASS
+Search Semantic|gateway|POST|http://localhost/search/semantic|200,400|200|0.006578|PASS
+Backfill Tags|gateway|POST|http://localhost/processing/backfill-tags|200,400|200|0.004278|PASS
+Admin Stats|gateway|GET|http://localhost/admin/stats|200,401,403|401|0.003517|PASS
+Admin Cleanup|gateway|POST|http://localhost/admin/cleanup|200,401,403|401|0.003820|PASS
+Admin Edge Prune|gateway|POST|http://localhost/admin/edges/prune|200,401,403|401|0.003206|PASS
+Tagmaker Health|gateway|GET|http://localhost/health|200,401,403|200|0.008164|PASS
+Tagmaker Metrics|gateway|GET|http://localhost/metrics|200,401,403|200|0.007181|PASS
+Tagmaker Root|gateway|GET|http://localhost/|200,401,403|200|0.003847|PASS
+Queue Status|gateway|GET|http://localhost/queue-status|200,401,403|200|0.004501|PASS
+DB Status|gateway|GET|http://localhost/database-status|200,401,403|200|0.005572|PASS
+DB Debug|gateway|GET|http://localhost/database-debug|200,401,403|200|0.003784|PASS
+DB Direct Test|gateway|GET|http://localhost/database-direct-test|200,401,403|200|0.004465|PASS
+Manual Rebalance|gateway|POST|http://localhost/manual-rebalance|200,401,403|200|0.003145|PASS
+Extract Tags|gateway|POST|http://localhost/extract-tags|200,422,500|500|0.386332|PASS
+Generate+Save|gateway|POST|http://localhost/generate-and-save|200,422,500|500|0.135082|PASS
+Feedback|gateway|POST|http://localhost/feedback|200,401,403|200|0.002820|PASS
+Version|gateway|GET|http://localhost/version|200,401,403|200|0.003920|PASS
+Security Health|gateway|GET|http://localhost/security/health|200,401,403|200|0.004177|PASS
+Security Metrics|gateway|GET|http://localhost/security/metrics?args=test&kwargs=test|200,401,403|500|0.004371|FAIL
+Edge Learn Replay|gateway|POST|http://localhost/admin/edge-learn/replay|200,401,403|200|0.004101|PASS
+Health|tagging-direct|GET|http://localhost:8081/health|200|200|0.001057|PASS
+Metrics|tagging-direct|GET|http://localhost:8081/metrics|200|200|0.000844|PASS
+Recent|tagging-direct|GET|http://localhost:8081/memory/recent|200,401|200|0.002017|PASS
+Memory Query|tagging-direct|GET|http://localhost:8081/memory/query|200,401|200|0.001738|PASS
+Query Debug|tagging-direct|GET|http://localhost:8081/memory/query-debug|200,401|200|0.001592|PASS
+Tokenizer Health|tagging-direct|GET|http://localhost:8081/memory/tokenizer-health|200,401|200|0.001019|PASS
+Memory Save|tagging-direct|POST|http://localhost:8081/memory/save|200,201,400|201|0.001362|PASS
+Tags Extract|tagging-direct|POST|http://localhost:8081/tags/extract|200,400|200|0.001394|PASS
+Tags Query|tagging-direct|POST|http://localhost:8081/tags/query|200,400|200|0.002371|PASS
+Search|tagging-direct|POST|http://localhost:8081/search/semantic|200,400|200|0.000767|PASS
+Backfill|tagging-direct|POST|http://localhost:8081/processing/backfill-tags|200,400|200|0.001611|PASS

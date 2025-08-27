@@ -1,0 +1,54 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'slack-notifications'
+  
+  # Degradation alerts route (resilience policy v1 - 2025-08-20)
+  routes:
+    - match:
+        alertname: MMEPromoteHighLatency
+      receiver: 'mme-degrade'
+      group_wait: 30s
+      group_interval: 30s
+      repeat_interval: 5m
+    - match:
+        alertname: MMEPromoteHighLatency
+        severity: resolved
+      receiver: 'mme-restore'
+      group_wait: 30s
+      group_interval: 30s
+      repeat_interval: 5m
+
+receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/placeholder'
+        channel: '#mme-alerts'
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+  
+  - name: 'mme-degrade'
+    webhook_configs:
+      - url: 'http://isolation-sentinel:8080/degrade'
+        send_resolved: false
+  
+  - name: 'mme-restore'
+    webhook_configs:
+      - url: 'http://isolation-sentinel:8080/restore'
+        send_resolved: true
+
+templates:
+  - '/etc/alertmanager/template/*.tmpl'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']

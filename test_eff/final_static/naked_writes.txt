@@ -1,0 +1,41 @@
+NAKED JSON WRITES AUDIT - MME TAGGING & TAGMAKER SERVICES
+
+MME TAGGING SERVICE:
+
+SYSTEM ENDPOINTS (CORRECT - Raw responses expected):
+✅ /metrics endpoint: c.JSON(metrics.GetMetrics()) - CORRECT for system endpoint
+✅ Test files: Multiple c.JSON() calls in test files - CORRECT for tests
+
+BUSINESS ENDPOINTS (CORRECT - Standardized envelopes):
+✅ All business handlers use responseBuilder.SendSuccess() or responseBuilder.SendError()
+✅ No naked JSON writes found in business endpoint handlers
+
+MIDDLEWARE (CORRECT - Error responses):
+✅ JWT middleware: c.Status(fiber.StatusForbidden).JSON() - CORRECT for middleware errors
+✅ Response builder: c.Status(status).JSON(response) - CORRECT for envelope responses
+
+COMMENTED CODE (NOT ACTIVE):
+⚠️ internal/memory/events.go: Lines 143, 150, 157 - COMMENTED OUT
+⚠️ internal/memory/handlers.go: Line 471 - COMMENTED OUT
+
+MME TAGMAKER SERVICE:
+
+BUSINESS ENDPOINTS (CORRECT - Standardized envelopes):
+✅ All business routes use ResponseEnvelope and ErrorEnvelope
+✅ No naked JSON writes found in business handlers
+
+MIDDLEWARE (CORRECT - Envelope handling):
+✅ EnvelopeMiddleware: Properly wraps business responses
+✅ Exception handlers: Use ErrorEnvelope for standardized errors
+
+SYSTEM ENDPOINTS (CORRECT - Raw responses expected):
+✅ /health, /metrics, /docs, /redoc, /openapi.json remain raw
+
+ENVELOPE IMPLEMENTATION:
+✅ ResponseEnvelope: Standardized success responses
+✅ ErrorEnvelope: Standardized error responses with codes
+✅ Request correlation: X-Request-Id headers included
+
+VERDICT: ✅ PASS - No naked JSON writes in business handlers
+All business endpoints properly use standardized response envelopes in both services.
+System endpoints correctly remain raw for operational purposes.

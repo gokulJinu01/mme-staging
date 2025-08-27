@@ -1,0 +1,35 @@
+SCORING IMPLEMENTATION AUDIT - MME TAGGING SERVICE
+
+VECTOR SIMILARITY INTEGRATION:
+✅ VectorSimilarity field added to ScoreParts struct
+✅ BetaVectorSimilarity (βᵥ) weight in scoring formula
+✅ Configurable weight via MME_BETA_VECTOR_SIMILARITY (default: 0.2)
+✅ Vector similarity added to total score calculation
+
+SCORING FORMULA:
+Total = β₁×Activation + β₂×Recency + β₃×Importance + β₄×StatusBonus - DiversityPenalty + β₅×VectorSimilarity
+
+CONFIGURABLE WEIGHTS:
+- BetaActivation: 1.0 (default)
+- BetaRecency: 0.5 (default)
+- BetaImportance: 0.25 (default)
+- BetaStatus: 0.25 (default)
+- BetaVectorSimilarity: 0.2 (default, conservative)
+
+SORTING IMPLEMENTATION:
+✅ Stable sorting implemented in multiple locations:
+- bounded.go: Line 224 - sort.Slice for tag scores
+- inject.go: Line 209 - sort.Slice for scored blocks
+- hybrid_search.go: Line 59 - sort.Slice for combined results
+- promote.go: Line 35 - sort.Slice for scored items
+
+MISSING IMPLEMENTATIONS:
+❌ Score rounding (1e-6) not implemented
+❌ Explicit tie-break logic not found in sorting functions
+
+RECOMMENDATIONS:
+1. Add score rounding to ensure determinism
+2. Implement explicit tie-break (Activation, then ID) in sorting functions
+3. Add vector similarity normalization to [0,1] range
+
+VERDICT: ⚠️ PARTIAL - Vector similarity integrated, but rounding and tie-breaks need improvement

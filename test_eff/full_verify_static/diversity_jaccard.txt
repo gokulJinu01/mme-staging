@@ -1,0 +1,37 @@
+DIVERSITY AND JACCARD IMPLEMENTATION AUDIT - MME TAGGING SERVICE
+
+JACCARD HARD CUT:
+✅ Hard cutoff implemented in inject.go:
+- Line 238: jHard := packerConfig.JaccardHardCut (default: 0.85)
+- Line 348-357: Hard cutoff check for extreme duplicates
+- Line 357: continue statement for hard diversity cut
+
+CONFIGURATION:
+✅ JaccardHardCut configurable via MME_PACKER_JACCARD_HARD_CUT
+✅ Default value: 0.85 (hard cutoff for extreme duplicates)
+
+SOFT DIVERSITY:
+✅ Submodular diversity gain calculation:
+- Line 362: calculateSubmodularGain() function call
+- Line 365: diversityGain < 0.1 threshold check
+- Line 366: continue for soft diversity cutoff
+
+DIVERSITY PENALTY:
+✅ Diversity penalty in scoring formula:
+- Line 75-85: DiversityPenalty calculation in ScoreBlock()
+- Uses lambda parameter for diversity weight
+- Jaccard similarity calculation between tag sets
+
+JACCARD SIMILARITY:
+✅ calculateJaccardSimilarity() function implemented:
+- Proper set intersection/union calculation
+- Handles edge cases (empty sets)
+- Returns normalized similarity [0,1]
+
+IMPLEMENTATION LOCATIONS:
+- internal/memory/inject.go: Hard and soft diversity checks
+- internal/memory/scoring.go: Diversity penalty calculation
+- internal/config/config.go: JaccardHardCut configuration
+
+VERDICT: ✅ PASS - Complete diversity implementation with both hard and soft guards
+Hard Jaccard cutoff (0.85) and soft submodular diversity properly implemented.

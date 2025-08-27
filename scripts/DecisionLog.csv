@@ -1,0 +1,6 @@
+ID,Date,Title,Decision,Approver,Rationale,Revisit Date,Status
+"D-001",2025-01-15,"Enhanced Search Implementation","Proceed with hybrid search implementation","Gokul","Addresses word-by-word limitation while maintaining core guarantees","2025-02-15","Open"
+"D-002",2025-01-10,"Pilot Pricing Strategy","Free pilots with success-based pricing","Gokul","Reduces friction for design partners; validates value proposition","2025-03-10","Open"
+"D-003",2025-01-08,"API Standardization Priority","Complete before SDK development","Engineering Team","SDK requires standardized APIs; critical for enterprise adoption","2025-02-08","Open"
+"D-004",2025-01-05,"Content Strategy Focus","MME-first messaging with pilot case studies","Gokul","Builds thought leadership while showcasing real results","2025-04-05","Open"
+"D-005",2025-01-03,"Technical Advisory Board Scope","3-5 advisors from orchestration/security space","Gokul","Provides industry validation and strategic guidance","2025-03-03","Open"

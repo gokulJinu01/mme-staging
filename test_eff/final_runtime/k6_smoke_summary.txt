@@ -1,0 +1,5 @@
+    http_req_duration
+    http_req_failed
+    http_req_duration..............: avg=5.93ms min=363µs   med=4.47ms  max=113.92ms p(90)=8.45ms p(95)=11.71ms
+    http_req_failed................: 0.00%  0 out of 10610
+    http_reqs......................: 10610  353.17781/s

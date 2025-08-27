@@ -1,0 +1,11 @@
+KR,Objective,Metric,Baseline,Target,Current,Unit,Due Date,Status
+"Design Partner Meetings","Secure 3 Design Partners by Q1 2025","Number of enterprise meetings",0,10,0,"count",2025-02-15,"On Track"
+"Pilot Agreements Signed","Secure 3 Design Partners by Q1 2025","Signed SOWs",0,3,0,"count",2025-03-31,"On Track"
+"Active Pilots","Secure 3 Design Partners by Q1 2025","Pilots in production",0,3,0,"count",2025-04-30,"On Track"
+"Enhanced Search Deployment","Launch Enhanced Search to Production","Production deployment",0,1,0,"boolean",2025-02-28,"On Track"
+"Search Quality Improvement","Launch Enhanced Search to Production","Recall improvement",0,25,0,"%",2025-02-28,"On Track"
+"API Endpoints Standardized","Complete API Standardization","Standardized endpoints",0,38,38,"count",2025-02-15,"Done"
+"SDK Readiness Score","Complete API Standardization","SDK readiness assessment",0,100,85,"%",2025-02-15,"On Track"
+"Case Studies Published","Generate 5 Case Studies","Published case studies",0,5,0,"count",2025-04-30,"Not Started"
+"Advisory Board Members","Establish Technical Advisory Board","Confirmed advisors",0,3,0,"count",2025-03-31,"Not Started"
+"Technical Validation Meetings","Establish Technical Advisory Board","Advisor meetings",0,10,0,"count",2025-03-31,"Not Started"

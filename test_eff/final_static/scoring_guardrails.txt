@@ -1,0 +1,44 @@
+SCORING GUARDRAILS AUDIT - MME TAGGING SERVICE
+
+SCORE ROUNDING:
+✅ almostEq function implemented:
+- Location: internal/memory/inject.go:478
+- Precision: 1e-9 (math.Abs(x-y) < 1e-9)
+- Usage: Lines 211-212 in sort.Slice for stable comparisons
+
+STABLE TIE-BREAK LOGIC:
+✅ Stable tie-break implemented in inject.go:
+- Primary: Score.Total (highest first)
+- Secondary: Score.Activation (highest first) 
+- Tertiary: MemoryBlock.ID (lexicographic)
+- Implementation: Lines 209-218 in sort.Slice
+
+VECTOR SIMILARITY INTEGRATION:
+✅ Vector similarity properly integrated:
+- Field: ScoreParts.VectorSimilarity (Line 16 in scoring.go)
+- Weight: BetaVectorSimilarity (default: 0.2, configurable)
+- Formula: Total = β₁×Activation + β₂×Recency + β₃×Importance + β₄×StatusBonus - DiversityPenalty + β₅×VectorSimilarity
+
+VECTOR SIMILARITY NORMALIZATION:
+✅ normalizeVectorScore function implemented:
+- Location: internal/memory/hybrid_search.go:199
+- Range: Clamps to [0,1] range
+- Safety: Prevents out-of-bounds vector scores
+- Usage: Line 185 in CombineScores method
+
+BETA VECTOR WEIGHT:
+✅ BetaVectorSimilarity properly bounded:
+- Default: 0.2 (conservative)
+- Configurable: MME_BETA_VECTOR_SIMILARITY env var
+- Bounded: Used in scoring formula with proper weight
+
+SORTING IMPLEMENTATIONS:
+✅ Stable sorting in multiple locations:
+- inject.go:209 - ScoredBlock sorting with tie-breaks
+- bounded.go:224 - Tag score sorting
+- hybrid_search.go:59 - Combined result sorting
+- promote.go:35 - Scored item sorting
+- enhanced_query_processor.go:105 - Term sorting
+
+VERDICT: ✅ PASS - All scoring guardrails properly implemented
+Score rounding (1e-9), stable tie-breaks (Total→Activation→ID), and vecSim normalization [0,1] all present.
