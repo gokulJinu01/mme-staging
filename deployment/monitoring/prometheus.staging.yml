@@ -1,0 +1,73 @@
+# Prometheus Configuration for MME Staging Environment
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules.yml"
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # MME Tagging Service
+  - job_name: 'mme-tagging-service'
+    static_configs:
+      - targets: ['mme-tagging-service:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # MME Tagmaker Service
+  - job_name: 'mme-tagmaker-service'
+    static_configs:
+      - targets: ['mme-tagmaker-service:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # JWT Verifier Service
+  - job_name: 'jwt-verifier'
+    static_configs:
+      - targets: ['jwt-verifier:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # MongoDB Exporter
+  - job_name: 'mongodb-exporter'
+    static_configs:
+      - targets: ['mongodb-exporter:9216']
+    scrape_interval: 30s
+
+  # Redis Exporter
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # Node Exporter
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # Traefik
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8082']
+    scrape_interval: 15s
+
+  # File-based service discovery for dynamic targets
+  - job_name: 'file-sd-targets'
+    file_sd_configs:
+      - files:
+        - '/etc/prometheus/file_sd/*.json'
+    scrape_interval: 30s

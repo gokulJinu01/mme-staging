@@ -1,0 +1,431 @@
+# MME Staging Environment - Docker Compose
+# Optimized for GCP VM deployment with production-ready configuration
+
+version: '3.8'
+
+services:
+  # Traefik API Gateway - Staging Configuration
+  traefik:
+    image: traefik:v2.10
+    container_name: mme-traefik-staging
+    restart: unless-stopped
+    environment:
+      - ENV=staging
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9000:9000"  # Traefik dashboard (staging only)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/acme.json
+    networks:
+      - mme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.34.58.167.157.nip.io`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.middlewares=security-headers@docker"
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@mme-staging.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+
+  # JWT Verifier Service
+  jwt-verifier:
+    build:
+      context: ../jwt-verifier
+      dockerfile: Dockerfile
+    container_name: mme-jwt-verifier-staging
+    restart: unless-stopped
+    environment:
+      - ENV=staging
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=3000
+    networks:
+      - mme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jwt-verifier.rule=Host(`auth.34.58.167.157.nip.io`)"
+      - "traefik.http.services.jwt-verifier.loadbalancer.server.port=3000"
+      - "traefik.http.routers.jwt-verifier.entrypoints=web"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: mme-mongodb-staging
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=mme
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - mme-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: mme-redis-staging
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - mme-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MME Tagging Service (Core Packer)
+  mme-tagging-service:
+    build:
+      context: ../mme-tagging-service
+      dockerfile: Dockerfile
+    container_name: mme-tagging-service-staging
+    restart: unless-stopped
+    environment:
+      - ENV=staging
+      - ENABLE_DEBUG=false
+      - MONGODB_URI=mongodb://admin:${MONGODB_ROOT_PASSWORD}@mongodb:27017/mme?authSource=admin&maxPoolSize=100&minPoolSize=10&maxIdleTimeMS=300000
+      - GO_ENV=production
+      - MME_LOG_LEVEL=info
+      - PORT=8080
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ALLOWED_ORIGINS=*
+      - MME_TAGMAKER_SERVICE_URL=http://mme-tagmaker-service:8000
+      # MME Configuration (Mode C - Production Ready)
+      - MME_MAX_EDGES_PER_TAG=${MME_MAX_EDGES_PER_TAG:-32}
+      - MME_MAX_DEPTH=${MME_MAX_DEPTH:-2}
+      - MME_BEAM_WIDTH=${MME_BEAM_WIDTH:-128}
+      - MME_MAX_SEED_TAGS=${MME_MAX_SEED_TAGS:-5}
+      - MME_DECAY_ALPHA=${MME_DECAY_ALPHA:-0.8}
+      - MME_MIN_ACTIVATION=${MME_MIN_ACTIVATION:-0.05}
+      - MME_TOKEN_BUDGET=${MME_TOKEN_BUDGET:-2048}
+      - MME_DIVERSITY_LAMBDA=${MME_DIVERSITY_LAMBDA:-0.15}
+      - MME_RECENCY_TAU_DAYS=${MME_RECENCY_TAU_DAYS:-60}
+      - MME_RECENCY_WINDOW_HOURS=${MME_RECENCY_WINDOW_HOURS:-720}
+      - MME_CACHE_TTL_SECS=${MME_CACHE_TTL_SECS:-300}
+      - MME_BETA_ACTIVATION=${MME_BETA_ACTIVATION:-1.0}
+      - MME_BETA_RECENCY=${MME_BETA_RECENCY:-0.5}
+      - MME_BETA_IMPORTANCE=${MME_BETA_IMPORTANCE:-0.25}
+      - MME_BETA_STATUS=${MME_BETA_STATUS:-0.25}
+      - MME_STATUS_BONUS_COMPLETED=${MME_STATUS_BONUS_COMPLETED:-1.0}
+      - MME_STATUS_BONUS_SUBMITTED=${MME_STATUS_BONUS_SUBMITTED:-0.5}
+      - MME_STATUS_BONUS_DRAFT=${MME_STATUS_BONUS_DRAFT:-0.0}
+      - MME_PACKER_TOKENIZER_MODE=${MME_PACKER_TOKENIZER_MODE:-tiktoken}
+      - MME_PACKER_TOKENIZER_MODEL=${MME_PACKER_TOKENIZER_MODEL:-gpt-3.5-turbo}
+      - MME_PACKER_DIVERSITY_MODE=${MME_PACKER_DIVERSITY_MODE:-soft}
+      - MME_PACKER_DIVERSITY_LAMBDA=${MME_PACKER_DIVERSITY_LAMBDA:-0.15}
+      - MME_PACKER_JACCARD_HARD_CUT=${MME_PACKER_JACCARD_HARD_CUT:-0.95}
+      - MME_PACKER_EPSILON_SUM=${MME_PACKER_EPSILON_SUM:-0.05}
+      - MME_PACKER_SELECTION_MODE=${MME_PACKER_SELECTION_MODE:-hybrid}
+      - MME_PACKER_DENSITY_SWITCH_TOKENS=${MME_PACKER_DENSITY_SWITCH_TOKENS:-512}
+      - MME_PACKER_MAX_EDGES_PER_TAG=${MME_PACKER_MAX_EDGES_PER_TAG:-32}
+      - MME_PACKER_TOKEN_BUDGET=${MME_PACKER_TOKEN_BUDGET:-2048}
+      # vecSim & Union Configuration (Mode C)
+      - MME_VECSIM_ENABLED=${MME_VECSIM_ENABLED:-true}
+      - MME_BETA_VECTOR_SIMILARITY=${MME_BETA_VECTOR_SIMILARITY:-0.20}
+      - MME_UNION_ENABLED=${MME_UNION_ENABLED:-true}
+      - MME_UNION_TOP_M=${MME_UNION_TOP_M:-50}
+      - ALLOW_NEIGHBORS=${ALLOW_NEIGHBORS:-true}
+      - PROMOTE_TOPK=${PROMOTE_TOPK:-10}
+      - MME_DEGRADATION_MODE=${MME_DEGRADATION_MODE:-false}
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: '1.0'
+        reservations:
+          memory: 512m
+          cpus: '0.25'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      jwt-verifier:
+        condition: service_healthy
+    networks:
+      - mme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mme-tagging.rule=Host(`mme.34.58.167.157.nip.io`)"
+      - "traefik.http.middlewares.auth-forward.forwardauth.address=http://jwt-verifier:3000/verify"
+      - "traefik.http.middlewares.auth-forward.forwardauth.trustforwardheader=true"
+      - "traefik.http.middlewares.auth-forward.forwardauth.authresponseheaders=X-User-ID,X-User-Roles,X-Org-ID,X-Project-ID"
+      - "traefik.http.routers.mme-tagging.middlewares=auth-forward@docker,security-headers@docker"
+      - "traefik.http.services.mme-tagging.loadbalancer.server.port=8080"
+      - "traefik.http.routers.mme-tagging.entrypoints=web"
+      - "traefik.http.routers.mme-tagging.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.mme-tagging.entrypoints=websecure"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # MME Tagmaker Service (AI Tagging)
+  mme-tagmaker-service:
+    build:
+      context: ../mme-tagmaker-service
+      dockerfile: Dockerfile
+    container_name: mme-tagmaker-service-staging
+    restart: unless-stopped
+    environment:
+      - ENV=staging
+      - ENABLE_DEBUG=false
+      - ENABLE_TAGGING_SERVICE=true
+      - MME_TAGGING_SERVICE_URL=http://mme-tagging-service:8080
+      - PYTHON_ENV=production
+      - LOG_LEVEL=INFO
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MONGODB_URI=mongodb://admin:${MONGODB_ROOT_PASSWORD}@mongodb:27017/mme?authSource=admin&maxPoolSize=100&minPoolSize=10&maxIdleTimeMS=300000
+      - MONGODB_DATABASE=mme
+      - MONGODB_COLLECTION=memories
+      - MME_LEARN_ETA=${MME_LEARN_ETA:-0.05}
+      - MME_LEARN_R=${MME_LEARN_R:-0.03}
+      - MME_LEARN_D=${MME_LEARN_D:-0.01}
+      - MME_LEARN_WMAX=${MME_LEARN_WMAX:-1.0}
+      - MME_LEARN_WINDOW_HOURS=${MME_LEARN_WINDOW_HOURS:-24}
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: '0.5'
+        reservations:
+          memory: 256m
+          cpus: '0.1'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mme-tagging-service:
+        condition: service_healthy
+      jwt-verifier:
+        condition: service_healthy
+    networks:
+      - mme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mme-tagmaker.rule=Host(`tagmaker.34.58.167.157.nip.io`)"
+      - "traefik.http.middlewares.auth-forward.forwardauth.address=http://jwt-verifier:3000/verify"
+      - "traefik.http.middlewares.auth-forward.forwardauth.trustforwardheader=true"
+      - "traefik.http.middlewares.auth-forward.forwardauth.authresponseheaders=X-User-ID,X-User-Roles,X-Org-ID,X-Project-ID"
+      - "traefik.http.routers.mme-tagmaker.middlewares=auth-forward@docker,security-headers@docker"
+      - "traefik.http.services.mme-tagmaker.loadbalancer.server.port=8000"
+      - "traefik.http.routers.mme-tagmaker.entrypoints=web"
+      - "traefik.http.routers.mme-tagmaker.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.mme-tagmaker.entrypoints=websecure"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: mme-prometheus-staging
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - mme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.34.58.167.157.nip.io`)"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+      - "traefik.http.routers.prometheus.entrypoints=web"
+      - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+
+  # Grafana Dashboards
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: mme-grafana-staging
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - mme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.34.58.167.157.nip.io`)"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+
+  # Alertmanager
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: mme-alertmanager-staging
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks:
+      - mme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alertmanager.rule=Host(`alertmanager.34.58.167.157.nip.io`)"
+      - "traefik.http.services.alertmanager.loadbalancer.server.port=9093"
+      - "traefik.http.routers.alertmanager.entrypoints=web"
+      - "traefik.http.routers.alertmanager.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.alertmanager.entrypoints=websecure"
+
+  # MongoDB Exporter for Prometheus
+  mongodb-exporter:
+    image: percona/mongodb_exporter:0.39
+    container_name: mme-mongodb-exporter-staging
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://admin:${MONGODB_ROOT_PASSWORD}@mongodb:27017/mme?authSource=admin&maxPoolSize=100&minPoolSize=10&maxIdleTimeMS=300000
+    networks:
+      - mme-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  # Node Exporter for System Metrics
+  node-exporter:
+    image: prom/node-exporter:v1.6.0
+    container_name: mme-node-exporter-staging
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - mme-network
+
+  # Redis Exporter for Cache Monitoring
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: mme-redis-exporter-staging
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - mme-network
+    depends_on:
+      - redis
+
+  # Isolation Sentinel Cron
+  isolation-sentinel:
+    image: alpine:latest
+    container_name: mme-isolation-sentinel-staging
+    restart: unless-stopped
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./logs:/logs
+      - ./monitoring/file_sd:/etc/prometheus/file_sd:rw
+    command: >
+      sh -c "
+        apk add --no-cache curl jq bash &&
+        echo '*/5 * * * * /scripts/isolation_sentinel.sh' > /var/spool/cron/crontabs/root &&
+        crond -f -l 2
+      "
+    networks:
+      - mme-network
+    depends_on:
+      - mme-tagging-service
+
+  # Spike-trace Sampler Cron
+  spike-trace-sampler:
+    image: alpine:latest
+    container_name: mme-spike-trace-sampler-staging
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./scripts:/scripts:ro
+      - ./logs:/logs
+    command: >
+      sh -c "
+        apk add --no-cache curl jq bash docker-cli &&
+        echo '0 1 * * * /scripts/spike_trace_sampler.sh' > /var/spool/cron/crontabs/root &&
+        crond -f -l 2
+      "
+    networks:
+      - mme-network
+    depends_on:
+      - mme-tagging-service
+
+  # Documentation Server (MkDocs) - Staging Only
+  docs-server:
+    image: squidfunk/mkdocs-material:9.4.0
+    container_name: mme-docs-server-staging
+    restart: unless-stopped
+    volumes:
+      - ../docs:/docs
+    working_dir: /docs
+    command: serve --dev-addr=0.0.0.0:8000
+    networks:
+      - mme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.docs.rule=Host(`docs.34.58.167.157.nip.io`)"
+      - "traefik.http.services.docs.loadbalancer.server.port=8000"
+      - "traefik.http.routers.docs.entrypoints=web"
+      - "traefik.http.routers.docs.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.docs.entrypoints=websecure"
+
+networks:
+  mme-network:
+    driver: bridge
+    name: mme-network-staging
+
+volumes:
+  mongodb_data:
+    name: mme_mongodb_data_staging
+  mongodb_config:
+    name: mme_mongodb_config_staging
+  redis_data:
+    name: mme_redis_data_staging
+  prometheus_data:
+    name: mme_prometheus_data_staging
+  grafana_data:
+    name: mme_grafana_data_staging
+  alertmanager_data:
+    name: mme_alertmanager_data_staging

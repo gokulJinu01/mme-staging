@@ -1,0 +1,125 @@
+# MME Staging Repository - .gitignore
+
+# Environment files (contain secrets)
+deployment/.env
+deployment/.secrets.env
+deployment/config/env.production
+deployment/config/env.local
+
+# Docker volumes and data
+deployment/logs/
+deployment/monitoring/file_sd/
+deployment/traefik/acme.json
+deployment/traefik/certs/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.pid
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node.js (if any frontend components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Go (if any Go scripts)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Certificate files
+*.pem
+*.key
+*.crt
+*.csr
+
+# Database dumps
+*.dump
+*.sql
+*.db
+
+# Test artifacts
+test_eff/benchmark/results_*.jsonl
+test_eff/benchmark/metrics_*.json
+test_eff/benchmark/k6_*.out
+test_eff/vecsim_full/*.txt
+test_eff/vecsim_full/*.out
+
+# Performance test results
+*.perf
+*.profile
+*.trace
+
+# Coverage reports
+coverage/
+*.cover
+*.out
+
+# Documentation builds
+docs/_build/
+docs/site/
+
+# Terraform (if using infrastructure as code)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Kubernetes (if using K8s)
+*.kubeconfig
+
+# Local development files
+local/
+dev/
+.env.local
+.env.development

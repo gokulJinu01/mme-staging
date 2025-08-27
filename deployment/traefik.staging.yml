@@ -1,0 +1,79 @@
+# Traefik Configuration for MME Staging Environment
+
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entrypoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: mme-network-staging
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@mme-staging.com
+      storage: /acme.json
+      httpChallenge:
+        entryPoint: web
+
+middlewares:
+  security-headers:
+    headers:
+      frameDeny: true
+      sslRedirect: true
+      browserXssFilter: true
+      contentTypeNosniff: true
+      forceSTSHeader: true
+      stsIncludeSubdomains: true
+      stsPreload: true
+      stsSeconds: 31536000
+      customFrameOptionsValue: "SAMEORIGIN"
+      customRequestHeaders:
+        X-Forwarded-Proto: "https"
+      customResponseHeaders:
+        X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
+        Server: ""
+
+  rate-limit:
+    rateLimit:
+      burst: 100
+      average: 50
+
+  auth-forward:
+    forwardAuth:
+      address: "http://jwt-verifier:3000/verify"
+      trustForwardHeader: true
+      authResponseHeaders:
+        - "X-User-ID"
+        - "X-User-Roles"
+        - "X-Org-ID"
+        - "X-Project-ID"
+
+log:
+  level: INFO
+
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  format: json
+
+metrics:
+  prometheus:
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
