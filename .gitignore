@@ -1,6 +1,7 @@
 # MME Staging Repository - .gitignore
 
 # Environment files (contain secrets)
+.env
 deployment/.env
 deployment/.secrets.env
 deployment/config/env.production
