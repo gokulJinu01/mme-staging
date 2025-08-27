@@ -130,3 +130,6 @@ test_eff/
 deployment/test_eff/
 mme-tagmaker-service/app/tests/
 deployment/config/env.*
+**/*_test.go
+**/*_bench_test.go
+**/*_integration_test.go
